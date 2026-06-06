@@ -10,5 +10,6 @@ jobs:
     uses: OpenVoiceOS/gh-automations/.github/workflows/build-tests.yml@dev
     with:
       python_versions: '["3.10", "3.11", "3.12", "3.13", "3.14"]'
+      pre_install_pip: 'ovos-plugin-manager>=2.4.0a1'
       install_extras: 'test'
       test_path: 'tests'
