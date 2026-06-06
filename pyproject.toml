@@ -6,14 +6,12 @@ build-backend = "setuptools.build_meta"
 name = "ovos-messagebus-chat-plugin"
 dynamic = ["version"]
 description = "OVOS ChatEngine agent plugin that proxies turns through a connected OVOS messagebus"
+license = { text = "Apache-2.0" }
 readme = "README.md"
 authors = [
     { name = "jarbasAi", email = "jarbasai@mailfence.com" }
 ]
 requires-python = ">=3.10"
-classifiers = [
-    "License :: OSI Approved :: Apache Software License",
-]
 dependencies = [
     "ovos-bus-client>=1.3.1,<3.0.0",
     "ovos-plugin-manager>=2.4.0a1,<3.0.0",
