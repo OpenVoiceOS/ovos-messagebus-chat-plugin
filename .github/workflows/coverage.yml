@@ -12,5 +12,6 @@ jobs:
       python_version: '3.11'
       coverage_source: 'ovos_messagebus_chat_plugin'
       test_path: 'tests/'
-      install_extras: 'test'
+      pre_install_pip: 'ovos-plugin-manager>=2.4.0a1'
+      install_extras: '.[test]'
       min_coverage: 0
