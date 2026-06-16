@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1a2](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/tree/0.1.1a2) (2026-06-16)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/compare/0.1.1a1...0.1.1a2)
+
+**Merged pull requests:**
+
+- chore: add missing shared CI workflows [\#4](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/pull/4) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.1.1a1](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/tree/0.1.1a1) (2026-06-07)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/compare/c96fffdab289983fa543a80189c8c253f5299ed1...0.1.1a1)
