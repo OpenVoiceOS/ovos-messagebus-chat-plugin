@@ -6,20 +6,42 @@ from ovos_bus_client.session import Session, SessionManager
 from ovos_messagebus_chat_plugin import OVOSMessagebusChatAgent
 
 
+def _handler_names(listeners):
+    """Collect handler names from a bus's listeners for a topic.
+
+    FakeBus wraps handlers on migrated (namespaced) topics in a closure that
+    dedups the legacy/ovos.* mirror, so the registered callable is an opaque
+    ``wrapped`` function. Unwrap ``__closure__`` cells to recover the name of
+    the original bound method.
+    """
+    names = set()
+
+    def _add(obj):
+        names.add(getattr(obj, "__name__", ""))
+        func = getattr(obj, "__func__", None)
+        if func is not None:
+            names.add(getattr(func, "__name__", ""))
+
+    for listener in listeners:
+        _add(listener)
+        for cell in getattr(listener, "__closure__", None) or ():
+            try:
+                _add(cell.cell_contents)
+            except ValueError:
+                continue
+    return names
+
+
 class TestBusHandlerRegistration:
     def test_speak_is_listened_to(self, fake_bus):
         OVOSMessagebusChatAgent(bus=fake_bus, config={"timeout": 1})
         listeners = fake_bus.ee.listeners("speak")
-        assert any(getattr(l, "__name__", "") == "_on_speak"
-                   or getattr(getattr(l, "__func__", l), "__name__", "") == "_on_speak"
-                   for l in listeners)
+        assert "_on_speak" in _handler_names(listeners)
 
     def test_turn_end_is_listened_to(self, fake_bus):
         OVOSMessagebusChatAgent(bus=fake_bus, config={"timeout": 1})
         listeners = fake_bus.ee.listeners("ovos.utterance.handled")
-        assert any(getattr(l, "__name__", "") == "_on_turn_end"
-                   or getattr(getattr(l, "__func__", l), "__name__", "") == "_on_turn_end"
-                   for l in listeners)
+        assert "_on_turn_end" in _handler_names(listeners)
 
 
 class TestBusRoutingByntsession:
