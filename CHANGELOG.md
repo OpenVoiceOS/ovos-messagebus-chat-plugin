@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1a3](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/tree/0.1.1a3) (2026-07-15)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/compare/0.1.1a2...0.1.1a3)
+
+**Merged pull requests:**
+
+- docs: add funding attribution [\#5](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/pull/5) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.1.1a2](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/tree/0.1.1a2) (2026-06-16)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/compare/0.1.1a1...0.1.1a2)
