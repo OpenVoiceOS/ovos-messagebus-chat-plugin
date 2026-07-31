@@ -50,11 +50,11 @@ It does **not** own:
   `Session.from_message`, so the next turn sees mutations OVOS skills made to
   the Session.
 - TTS, STT, audio output. Those live elsewhere in the OVOS stack.
-- Conversation history. The caller passes `messages` on every call; the agent
-  reads only the latest user message and lets OVOS handle the rest via the
+- Conversation history. The caller passes `messages` on every call. The agent
+  reads only the latest user message and lets OVOS handle the rest through the
   reused Session.
 - Multi-skill orchestration, common_query disambiguation, dialog flow. The
-  OVOS pipeline owns all of this; the agent just hands the utterance over.
+  OVOS pipeline owns all of this. The agent just hands the utterance over.
 
 ## The `SessionManager` interplay
 
@@ -69,11 +69,11 @@ if msg_sess and msg_sess.session_id != "default":
     return msg_sess
 ```
 
-— every incoming bus message that carries a `Session` automatically refreshes
-the stored copy. The agent therefore does not need to listen for Session
-updates, does not need its own Session cache, and does not need to merge
-fields. It just reads `SessionManager.sessions[session_id]` at the start of
-each turn and trusts it to be current.
+Every incoming bus message that carries a `Session` automatically refreshes
+the stored copy. The agent does not need to listen for Session updates. It
+does not need its own Session cache, and it does not need to merge fields. It
+just reads `SessionManager.sessions[session_id]` at the start of each turn
+and trusts it to be current.
 
 ## Multi-turn semantics
 
@@ -82,9 +82,9 @@ Each `continue_chat` call:
 1. Reads `SessionManager.sessions[session_id]` (or creates a Session with that
    id and registers it via `SessionManager.update`).
 2. Sends the utterance with that exact Session attached.
-3. OVOS skills mutate the Session — activate themselves, write to
-   `IntentContextManager`, enter response-mode, change `lang` — and emit those
-   mutations back via `context.session` on every reply message.
+3. OVOS skills mutate the Session: they activate themselves, write to
+   `IntentContextManager`, enter response-mode, and change `lang`. They emit
+   those mutations back through `context.session` on every reply message.
 4. `SessionManager.get(message)` writes the updated Session back into
    `SessionManager.sessions[session_id]`.
 5. The next `continue_chat` with the same `session_id` picks up the updated
@@ -92,10 +92,10 @@ Each `continue_chat` call:
 
 This is what makes `MycroftSkill.get_response()`, common_query
 disambiguation, and context-managed intent matching work across turns. The
-fresh-`Session(uuid4())`-per-call pattern explicitly does not — every turn
+fresh-`Session(uuid4())`-per-call pattern explicitly does not. Every turn
 looks like a brand-new conversation to OVOS.
 
-## Layering: this agent is stateless; memory plugins are a no-op
+## Layering: this agent is stateless, memory plugins are a no-op
 
 `OVOSMessagebusChatAgent` treats every `continue_chat` call as a **one-off
 query**. It reads only the latest `MessageRole.USER` entry from `messages`
@@ -103,26 +103,26 @@ and ignores the rest. It does not store history, summarize prior turns,
 embed anything, or carry conversation context across calls in its own state.
 
 This is intentional. AgentMemory plugins (`opm.agents.memory`,
-`AgentContextManager` and friends) exist precisely to augment the `messages`
-list — prepend recall, inject summaries, retrieve embeddings — **before** a
+`AgentContextManager` and friends) exist to augment the `messages` list:
+prepend recall, inject summaries, retrieve embeddings, all **before** a
 `ChatEngine` sees it. Layering one in front of this agent is supported and
-recommended for LLM-style memory; but as far as this agent is concerned,
-that layering has **no effect on how the OVOS pipeline behaves**. The agent
-only forwards the most recent user utterance to the bus, exactly as if it
-arrived from a microphone.
+recommended for LLM-style memory. As far as this agent is concerned, that
+layering has **no effect on how the OVOS pipeline behaves**. The agent only
+forwards the most recent user utterance to the bus, exactly as if it arrived
+from a microphone.
 
 What makes multi-turn conversations work is not memory at the agent layer.
-It is **OVOS itself tracking state per `session_id`** via `SessionManager`:
+It is **OVOS itself tracking state per `session_id`** through `SessionManager`:
 
-- `active_skills`, response-mode flags, intent-context entities, language —
+- `active_skills`, response-mode flags, intent-context entities, and language
   all live on the `Session` object.
 - `SessionManager.sessions[session_id]` is the canonical store.
 - Every bus message refreshes that store automatically.
 
 The agent's only contribution is the one-line lookup that ensures successive
 turns with the same `session_id` reuse the same `Session`. If a caller
-changes `session_id` between turns, OVOS sees a brand-new conversation —
-that is the correct, documented behaviour, not a bug.
+changes `session_id` between turns, OVOS sees a brand-new conversation. That
+is the correct, documented behavior, not a bug.
 
 In short:
 
@@ -141,8 +141,8 @@ The three layers compose cleanly because they own disjoint slices of state.
 - `_on_speak` and `_on_turn_end` execute on the bus thread.
 - `continue_chat` and `stream_sentences` execute on the caller's thread and
   block on `query.handled.wait()`.
-- `self.queries` is guarded by an internal `Lock` because the bus thread and
-  the caller thread both touch it.
+- An internal `Lock` guards `self.queries` because the bus thread and the
+  caller thread both touch it.
 
 ## End-of-turn signal
 
@@ -154,3 +154,6 @@ without the agent giving up too early.
 
 If `ovos.utterance.handled` never arrives, the configured `timeout` bounds
 the wait and the agent returns whatever it has.
+
+---
+[Home](README.md) · [Configuration →](configuration.md)

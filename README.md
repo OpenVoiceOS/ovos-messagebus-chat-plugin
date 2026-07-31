@@ -5,9 +5,9 @@ An OVOS `ChatEngine` agent plugin that proxies user turns through a connected
 call sends the latest user utterance to the OVOS pipeline and collects the
 synthesized response.
 
-The plugin reuses the `SessionManager`-owned `Session` for each `session_id`,
-so multi-turn conversations preserve OVOS-side state (active skills, entity
-context, response-mode flags, language). Skills that rely on
+The plugin reuses the `SessionManager`-owned `Session` for each `session_id`.
+This keeps OVOS-side state across multi-turn conversations: active skills,
+entity context, response-mode flags, and language. Skills that rely on
 `MycroftSkill.get_response()`, common_query disambiguation, or
 context-managed intents keep working across turns.
 
@@ -51,7 +51,7 @@ reply = agent.continue_chat(
 )
 print(reply.content)
 
-# next turn — same session_id reuses the Session, so OVOS skills that need
+# next turn: same session_id reuses the Session, so OVOS skills that need
 # follow-up context (get_response, common_query, dialog flow) keep working
 reply = agent.continue_chat(
     [
@@ -77,13 +77,19 @@ reply = agent.continue_chat(
 
 Full developer docs live in [`docs/`](docs/):
 
-- [`docs/architecture.md`](docs/architecture.md) — where the plugin fits in the
+- [`docs/architecture.md`](docs/architecture.md): where the plugin fits in the
   OVOS agent ecosystem and the SessionManager interplay.
-- [`docs/configuration.md`](docs/configuration.md) — every config key with
+- [`docs/configuration.md`](docs/configuration.md): every config key with
   behaviour notes.
-- [`docs/message_flow.md`](docs/message_flow.md) — end-to-end turn lifecycle,
+- [`docs/message_flow.md`](docs/message_flow.md): end-to-end turn lifecycle,
   including the cross-turn Session reuse story.
-- [`docs/development.md`](docs/development.md) — local tests, releases.
+- [`docs/development.md`](docs/development.md): local tests, releases.
+
+## Related projects
+
+- [OpenVoiceOS/ovos-bus-client](https://github.com/OpenVoiceOS/ovos-bus-client): owns the `SessionManager` and `Session` classes this plugin reuses across turns.
+- [OpenVoiceOS/ovos-plugin-manager](https://github.com/OpenVoiceOS/ovos-plugin-manager): defines the `ChatEngine` agent template and the `opm.agents.chat` entry point this plugin implements.
+- [OpenVoiceOS/ovos-persona](https://github.com/OpenVoiceOS/ovos-persona): a chat-agent consumer that loads this plugin through plugin discovery.
 
 ## License
 

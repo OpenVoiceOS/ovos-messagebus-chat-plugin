@@ -34,14 +34,14 @@ pytest tests/ --cov=ovos_messagebus_chat_plugin --cov-report=term-missing
 - Stable releases publish when changes land on `master` (see
   `.github/workflows/publish_stable.yml`).
 
-Versions live in `ovos_messagebus_chat_plugin/version.py`; the publish
+Versions live in `ovos_messagebus_chat_plugin/version.py`. The publish
 workflows bump them automatically.
 
 ## Adding tests
 
 Tests live under `tests/`. Conventions:
 
-- Use `FakeBus`. Never spin up a real `MessageBusClient`.
+- Use `FakeBus`. Never start a real `MessageBusClient`.
 - Drive turns by emitting `speak` and `ovos.utterance.handled` on the
   `FakeBus` from the test body.
 - Each behaviour from `docs/message_flow.md` should have a corresponding test.
@@ -51,8 +51,11 @@ Tests live under `tests/`. Conventions:
 ## Release checklist
 
 1. Open PRs against `dev`.
-2. Merge to `dev` — alpha is published automatically.
+2. Merge to `dev`. Alpha is published automatically.
 3. When ready for stable, the "Release Alpha and Propose Stable" workflow
-   opens a PR from `dev` → `master`.
-4. Merge that PR — stable is published automatically and the version is
+   opens a PR from `dev` to `master`.
+4. Merge that PR. Stable is published automatically and the version is
    bumped.
+
+---
+[← Message flow](message_flow.md) · [Home](README.md)

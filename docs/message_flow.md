@@ -38,8 +38,8 @@ The interesting story is what happens **between** turns.
 
 Turn 1 (`session_id="kitchen"`):
 
-1. Agent reads `SessionManager.sessions["kitchen"]` — absent → creates
-   `Session(session_id="kitchen")` and registers it.
+1. Agent reads `SessionManager.sessions["kitchen"]`. It is absent, so the
+   agent creates `Session(session_id="kitchen")` and registers it.
 2. Emits utterance with that Session attached.
 3. A skill (say, "weather") activates itself and calls `get_response`. It
    mutates the Session: adds itself to `active_skills`, enters response-mode,
@@ -52,7 +52,7 @@ Turn 1 (`session_id="kitchen"`):
 
 Turn 2 (`session_id="kitchen"`):
 
-1. Agent reads `SessionManager.sessions["kitchen"]` — **the mutated Session
+1. Agent reads `SessionManager.sessions["kitchen"]`: **the mutated Session
    from turn 1**.
 2. Emits the new utterance with that Session attached.
 3. The "weather" skill sees its own `active_skills` entry and its
@@ -60,9 +60,9 @@ Turn 2 (`session_id="kitchen"`):
    the conversation.
 
 This is the whole reason `OVOSMessagebusChatAgent` is a `ChatEngine` and not a
-single-shot solver. The agent owns none of this state — `SessionManager` does
-— but by looking up by `session_id` instead of minting a fresh UUID, the
-plugin lets every multi-turn OVOS feature work transparently.
+single-shot solver. The agent owns none of this state, `SessionManager` does.
+By looking up by `session_id` instead of minting a fresh UUID, the plugin
+lets every multi-turn OVOS feature work transparently.
 
 ## End-of-turn detection
 
@@ -70,7 +70,7 @@ The OVOS pipeline emits exactly one `ovos.utterance.handled` per utterance,
 after every skill that wanted to respond has spoken. The agent uses that as
 the turn-complete signal.
 
-Multi-`speak` responses are handled by the rolling timeout:
+The rolling timeout handles multi-`speak` responses:
 
 ```
 speak           -> _extend_timeout = True
@@ -87,15 +87,18 @@ streams sentences one at a time over several seconds still completes cleanly.
 ## Streaming
 
 `stream_sentences` yields each `speak` content as it arrives instead of
-joining at the end. Same end-of-turn detection; same rolling timeout. The
-yield ordering matches the OVOS bus emission order, which is the order skills
-emitted their `speak` calls.
+joining at the end. It uses the same end-of-turn detection and the same
+rolling timeout. The yield ordering matches the OVOS bus emission order,
+which is the order skills emitted their `speak` calls.
 
 ## What does *not* flow through this plugin
 
-- Binary payloads (audio data) — different OVOS subsystem entirely.
-- Wake-word activation, STT, TTS — the agent's input is already text and its
+- Binary payloads (audio data): a different OVOS subsystem entirely.
+- Wake-word activation, STT, TTS: the agent's input is already text and its
   output is text.
-- Pipeline routing decisions (which skill handles what) — owned by OVOS.
-- `mycroft.session.update` direct events — already consumed by
+- Pipeline routing decisions (which skill handles what): owned by OVOS.
+- `mycroft.session.update` direct events: already consumed by
   `SessionManager` before the agent sees them.
+
+---
+[← Configuration](configuration.md) · [Home](README.md) · [Development →](development.md)

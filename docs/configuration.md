@@ -42,3 +42,6 @@ one.
 
 The plugin does not read `mycroft.conf` directly. All configuration flows
 through the `config` dict passed to `__init__`.
+
+---
+[← Architecture](architecture.md) · [Home](README.md) · [Message flow →](message_flow.md)
