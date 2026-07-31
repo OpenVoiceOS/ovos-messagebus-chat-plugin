@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2a2](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/tree/0.1.2a2) (2026-07-31)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/compare/0.1.2a1...0.1.2a2)
+
+**Merged pull requests:**
+
+- docs: rewrite README in Simplified Technical English [\#7](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/pull/7) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.1.2a1](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/tree/0.1.2a1) (2026-07-18)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/compare/0.1.1a3...0.1.2a1)
