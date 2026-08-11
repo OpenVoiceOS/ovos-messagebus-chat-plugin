@@ -31,14 +31,10 @@ class TestSessionReuse:
         """Simulate: turn 1 a skill activates itself; turn 2's outgoing
         message must carry that active_skills entry in context.session.
         """
-        # turn 1: pipeline reply mutates the stored Session
-        def turn1_with_skill_activation():
-            sess = SessionManager.sessions.get("kitchen") or Session(session_id="kitchen")
-            sess.activate_skill("weather.skill")
-            SessionManager.update(sess)
-            _pipeline_reply(fake_bus, "kitchen", ["sure, which city?"])
-
-        turn1_with_skill_activation()
+        # turn 1: core activates a skill while handling the turn and reports it
+        # back on the reply's session context
+        _pipeline_reply(fake_bus, "kitchen", ["sure, which city?"],
+                        session_mutator=lambda s: s.activate_skill("weather.skill"))
         agent.continue_chat([_user("weather please")], session_id="kitchen")
 
         _pipeline_reply(fake_bus, "kitchen", ["it is sunny"])

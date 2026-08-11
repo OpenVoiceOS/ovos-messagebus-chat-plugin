@@ -39,11 +39,13 @@ def agent(fake_bus):
     return OVOSMessagebusChatAgent(bus=fake_bus, config={"timeout": 2})
 
 
-def _pipeline_reply(bus: FakeBus, session_id: str, utterances):
+def _pipeline_reply(bus: FakeBus, session_id: str, utterances,
+                    session_mutator=None):
     """Simulate the OVOS pipeline responding to the *next* utterance.
 
     Registers a one-shot handler on `recognizer_loop:utterance` that, when
-    triggered, fires the configured speaks followed by
+    triggered, optionally mutates the session (`session_mutator`) the way core
+    would, then fires the configured speaks followed by
     `ovos.utterance.handled`. Replies are emitted on a separate thread so
     the agent's blocking `continue_chat` call can return.
     """
@@ -56,6 +58,10 @@ def _pipeline_reply(bus: FakeBus, session_id: str, utterances):
 
         def _respond():
             sess = SessionManager.sessions.get(session_id) or Session(session_id=session_id)
+            if session_mutator is not None:
+                # core mutated the session while handling the turn (a skill
+                # activated itself, set a response mode, ...)
+                session_mutator(sess)
             ctx = {"session": sess.serialize()}
             for utt in utterances:
                 bus.emit(Message("speak", {"utterance": utt}, ctx))

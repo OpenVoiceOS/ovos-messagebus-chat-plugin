@@ -48,6 +48,16 @@ class OVOSMessagebusChatAgent(ChatEngine):
     - ``source_name`` (str, default ``"messagebus_chat_agent"``): value placed
       on the outgoing message ``context.source``; useful for routing rules.
 
+    Core owns session state. The plugin never pushes its own local
+    configuration (lang, pipeline, blacklisted skills, location, units) onto
+    core: a new session goes on the wire as identity only, and from the first
+    reply onwards the Session core sent back is echoed instead.
+
+    Use a distinct ``session_id`` per conversation. The shared ``"default"``
+    session is owned by core and is also synced by every connected
+    ``MessageBusClient`` at connect time, so its language may be whatever the
+    last client declared — pass ``lang`` explicitly if you must use it.
+
     Sessions are not owned by the plugin. ``SessionManager.sessions`` is the
     single source of truth, keyed by the ``session_id`` passed to
     ``continue_chat``. Subsequent turns with the same ``session_id`` reuse the
@@ -60,6 +70,10 @@ class OVOSMessagebusChatAgent(ChatEngine):
         self.bus: Optional[MessageBusClient] = bus
         self.queries: Dict[str, _Query] = {}
         self._queries_lock = threading.Lock()
+        # session_ids for which core has already echoed back a Session. Until
+        # that happens the plugin must not push its own locally-configured
+        # Session onto the wire (see _session_payload).
+        self._synced: set = set()
 
         if self.bus is None and self.config.get("autoconnect"):
             host = self.config.get("host", "127.0.0.1")
@@ -77,11 +91,24 @@ class OVOSMessagebusChatAgent(ChatEngine):
         self.bus.on("speak", self._on_speak)
         self.bus.on("ovos.utterance.handled", self._on_turn_end)
 
+    def _sync_session(self, message: Message) -> Session:
+        """Adopt the Session core sent back, so the next turn echoes core's state.
+
+        Core is the owner of session state (pipeline, lang, location, units,
+        active skills). Whatever it returns replaces the local copy, except for
+        the special ``default`` session which only core may update.
+        """
+        sess = SessionManager.get(message)
+        if sess.session_id != "default":
+            SessionManager.update(sess)
+        self._synced.add(sess.session_id)
+        return sess
+
     def _on_speak(self, message: Message) -> None:
         utt = message.data.get("utterance")
         if not utt:
             return
-        sess = SessionManager.get(message)
+        sess = self._sync_session(message)
         with self._queries_lock:
             query = self.queries.get(sess.session_id)
         if query is not None:
@@ -89,7 +116,7 @@ class OVOSMessagebusChatAgent(ChatEngine):
             query._extend_timeout = True
 
     def _on_turn_end(self, message: Message) -> None:
-        sess = SessionManager.get(message)
+        sess = self._sync_session(message)
         with self._queries_lock:
             query = self.queries.get(sess.session_id)
         if query is not None:
@@ -115,6 +142,47 @@ class OVOSMessagebusChatAgent(ChatEngine):
         SessionManager.update(sess)
         return sess
 
+    def _session_payload(self, sess: Session,
+                         lang: Optional[str] = None,
+                         units: Optional[str] = None) -> Dict:
+        """Build the ``context.session`` payload for an outgoing utterance.
+
+        A `Session` built client side is populated from the *client's* local
+        ovos configuration (lang, pipeline, blacklisted_skills, location,
+        units, date/time formats). Serializing that wholesale would override
+        core's own configuration for the turn — a chat client running with, say,
+        ``lang: pt-PT`` locally would make an English core resolve the utterance
+        as Portuguese and fail to match any intent.
+
+        So until core has echoed a Session back for this session_id, send only
+        the identity plus whatever the caller explicitly asked for. Core fills
+        the rest from its own config, exactly as it does for any other client.
+        Once core has replied, the stored Session *is* core's, and it is sent
+        back in full so cross-turn state survives.
+        """
+        if sess.session_id in self._synced:
+            payload = sess.serialize()
+        else:
+            payload = {"session_id": sess.session_id}
+        if lang:
+            payload["lang"] = sess.lang
+        if units:
+            payload["system_unit"] = sess.system_unit
+        return payload
+
+    def _utterance_payload(self, sess: Session, utterance: str,
+                           lang: Optional[str]) -> Dict:
+        """``recognizer_loop:utterance`` data for an outgoing turn.
+
+        ``lang`` is only pinned when the caller asked for one, or when core has
+        already told us what the session language is. Otherwise it is omitted so
+        core applies its own default instead of the client's local config.
+        """
+        data = {"utterances": [utterance]}
+        if lang or sess.session_id in self._synced:
+            data["lang"] = sess.lang
+        return data
+
     def continue_chat(self,
                       messages: List[AgentMessage],
                       session_id: str = "default",
@@ -139,9 +207,9 @@ class OVOSMessagebusChatAgent(ChatEngine):
         try:
             self.bus.emit(Message(
                 "recognizer_loop:utterance",
-                {"utterances": [last_user.content], "lang": sess.lang},
+                self._utterance_payload(sess, last_user.content, lang),
                 {
-                    "session": sess.serialize(),
+                    "session": self._session_payload(sess, lang=lang, units=units),
                     "source": self.config.get("source_name", "messagebus_chat_agent"),
                 },
             ))
@@ -184,9 +252,9 @@ class OVOSMessagebusChatAgent(ChatEngine):
         try:
             self.bus.emit(Message(
                 "recognizer_loop:utterance",
-                {"utterances": [last_user.content], "lang": sess.lang},
+                self._utterance_payload(sess, last_user.content, lang),
                 {
-                    "session": sess.serialize(),
+                    "session": self._session_payload(sess, lang=lang, units=units),
                     "source": self.config.get("source_name", "messagebus_chat_agent"),
                 },
             ))
