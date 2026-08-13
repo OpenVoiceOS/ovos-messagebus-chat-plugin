@@ -32,6 +32,27 @@ class TestSingleTurn:
         assert reply.role == MessageRole.ASSISTANT
         assert reply.content == ""
 
+    def test_accepts_tools_kwarg_none(self, agent, fake_bus):
+        """ChatEngine base contract: ``tools`` must be accepted (and ignored)
+        even though OVOSMessagebusChatAgent is not tool-capable."""
+        _pipeline_reply(fake_bus, "kitchen", ["it is 9am"])
+
+        reply = agent.continue_chat([_user("what time is it?")], session_id="kitchen", tools=None)
+
+        assert reply.role == MessageRole.ASSISTANT
+
+    def test_accepts_tools_kwarg_list(self, agent, fake_bus):
+        """Passing a non-empty ``tools`` list must not raise, since the base
+        ChatEngine.continue_chat wrapper may call subclasses with tools=."""
+        _pipeline_reply(fake_bus, "kitchen", ["it is 9am"])
+
+        reply = agent.continue_chat(
+            [_user("what time is it?")], session_id="kitchen",
+            tools=[{"type": "function", "function": {"name": "noop"}}],
+        )
+
+        assert reply.role == MessageRole.ASSISTANT
+
     def test_raises_when_no_user_message_in_history(self, agent):
         with pytest.raises(ValueError):
             agent.continue_chat([_assistant("hi there")], session_id="kitchen")

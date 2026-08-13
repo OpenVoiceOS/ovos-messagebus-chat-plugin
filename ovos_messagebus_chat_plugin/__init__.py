@@ -16,6 +16,11 @@ from ovos_bus_client.message import Message
 from ovos_bus_client.session import Session, SessionManager
 from ovos_plugin_manager.templates.agents import (AgentMessage, ChatEngine,
                                                   MessageRole)
+
+try:
+    from ovos_plugin_manager.templates.agents import ToolsArg
+except ImportError:  # pragma: no cover - older ovos-plugin-manager
+    ToolsArg = None
 from ovos_utils.log import LOG
 from pyee import EventEmitter
 
@@ -119,8 +124,15 @@ class OVOSMessagebusChatAgent(ChatEngine):
                       messages: List[AgentMessage],
                       session_id: str = "default",
                       lang: Optional[str] = None,
-                      units: Optional[str] = None) -> AgentMessage:
-        """Run the latest user utterance through the OVOS pipeline."""
+                      units: Optional[str] = None,
+                      tools: "ToolsArg" = None) -> AgentMessage:
+        """Run the latest user utterance through the OVOS pipeline.
+
+        ``tools`` is accepted for ``ChatEngine`` contract conformance and
+        ignored: this engine relays the turn onto the messagebus/pipeline,
+        which owns its own tooling elsewhere. The agentic-loop ReAct fallback
+        depends on non-tool engines being callable with ``tools=``.
+        """
         if self.bus is None:
             raise RuntimeError("OVOSMessagebusChatAgent is not bound to a bus")
 
