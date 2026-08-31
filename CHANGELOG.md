@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3a1](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/tree/0.1.3a1) (2026-08-31)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/compare/0.1.2a2...0.1.3a1)
+
+**Merged pull requests:**
+
+- fix: accept tools kwarg in continue\_chat for base contract conformance [\#10](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/pull/10) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.1.2a2](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/tree/0.1.2a2) (2026-07-31)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-messagebus-chat-plugin/compare/0.1.2a1...0.1.2a2)
