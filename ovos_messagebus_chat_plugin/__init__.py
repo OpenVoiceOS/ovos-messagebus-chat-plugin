@@ -15,7 +15,7 @@ from ovos_bus_client import MessageBusClient
 from ovos_bus_client.message import Message
 from ovos_bus_client.session import Session, SessionManager
 from ovos_plugin_manager.templates.agents import (AgentMessage, ChatEngine,
-                                                  MessageRole)
+                                                  MessageRole, ToolsArg)
 from ovos_utils.log import LOG
 from pyee import EventEmitter
 
@@ -119,8 +119,17 @@ class OVOSMessagebusChatAgent(ChatEngine):
                       messages: List[AgentMessage],
                       session_id: str = "default",
                       lang: Optional[str] = None,
-                      units: Optional[str] = None) -> AgentMessage:
-        """Run the latest user utterance through the OVOS pipeline."""
+                      units: Optional[str] = None,
+                      tools: ToolsArg = None) -> AgentMessage:
+        """Run the latest user utterance through the OVOS pipeline.
+
+        Args:
+            tools: unused. Accepted for contract conformance with
+                ``ChatEngine.continue_chat`` — this engine relays to the OVOS
+                intent bus, which has no notion of function/tool selection,
+                so ``supports_tools`` stays False and any ``tools`` passed
+                here is ignored rather than acted on.
+        """
         if self.bus is None:
             raise RuntimeError("OVOSMessagebusChatAgent is not bound to a bus")
 

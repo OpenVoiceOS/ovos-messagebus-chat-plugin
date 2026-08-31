@@ -36,6 +36,21 @@ class TestSingleTurn:
         with pytest.raises(ValueError):
             agent.continue_chat([_assistant("hi there")], session_id="kitchen")
 
+    def test_accepts_and_ignores_tools_kwarg(self, agent, fake_bus):
+        """continue_chat must match the base ChatEngine contract, which
+        accepts a `tools` keyword (ovos_plugin_manager.templates.agents.
+        ChatEngine.continue_chat). This engine has no native tool-calling
+        (supports_tools stays False) but must not blow up when a caller
+        passes tools= by keyword, e.g. an agentic loop probing every engine
+        uniformly before falling back to its own ReAct loop.
+        """
+        _pipeline_reply(fake_bus, "kitchen", ["ok"])
+
+        reply = agent.continue_chat([_user("hi")], session_id="kitchen", tools=None)
+
+        assert reply.role == MessageRole.ASSISTANT
+        assert reply.content == "ok"
+
     def test_uses_last_user_message(self, agent, fake_bus):
         _pipeline_reply(fake_bus, "kitchen", ["got it"])
         messages = [
